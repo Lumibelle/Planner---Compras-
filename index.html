@@ -3,56 +3,52 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Smart List AI</title>
+<title>Smart Market AI</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <style>
 *{margin:0;padding:0;box-sizing:border-box;font-family:Arial}
 body{display:flex;background:#0f172a;color:#fff}
 
-/* SIDEBAR */
 .sidebar{
-  width:80px;background:#020617;
-  display:flex;flex-direction:column;align-items:center;
-  padding:20px;gap:20px;
+ width:80px;background:#020617;
+ display:flex;flex-direction:column;
+ align-items:center;padding:20px;gap:20px;
 }
+
 .icon{
-  width:45px;height:45px;
-  display:flex;align-items:center;justify-content:center;
-  border-radius:12px;cursor:pointer;background:#111827;
+ width:45px;height:45px;
+ display:flex;align-items:center;justify-content:center;
+ border-radius:12px;background:#111827;cursor:pointer;
 }
 .icon:hover{background:#2563eb}
 .active{background:#2563eb}
 .icon svg{width:22px;stroke:white}
 
-/* MAIN */
 .main{flex:1;padding:20px}
 
-/* CARDS */
 .cards{
-  display:grid;
-  grid-template-columns:repeat(4,1fr);
-  gap:10px;margin-bottom:20px;
-}
-.card{
-  background:#1e293b;padding:15px;border-radius:12px;
+ display:grid;
+ grid-template-columns:repeat(4,1fr);
+ gap:10px;margin-bottom:20px;
 }
 
-/* LISTA */
+.card{background:#1e293b;padding:15px;border-radius:12px}
+
 .lista{
-  display:grid;
-  grid-template-columns:repeat(auto-fill,minmax(180px,1fr));
-  gap:10px;
+ display:grid;
+ grid-template-columns:repeat(auto-fill,minmax(180px,1fr));
+ gap:10px;
 }
-.item{
-  background:#334155;padding:10px;border-radius:10px;
-}
+
+.item{background:#334155;padding:10px;border-radius:10px}
 
 button{
-  margin-top:5px;padding:5px;border:none;
-  border-radius:6px;background:#2563eb;color:#fff;
-  cursor:pointer;
+ margin-top:5px;padding:5px;border:none;
+ border-radius:6px;background:#2563eb;color:#fff;
+ cursor:pointer;
 }
+
 .delete{background:#ef4444}
 .hidden{display:none}
 </style>
@@ -82,26 +78,21 @@ button{
 
 <div class="main">
 
-<h2>Smart List AI</h2>
+<h2>Smart Market AI</h2>
 
 <!-- HOME -->
 <div id="home">
 <div class="cards">
 <div class="card">Gasto atual: R$ <span id="gastoAtual"></span></div>
 <div class="card">Previsão IA: R$ <span id="previsao"></span></div>
-<div class="card">Mês atual: <span id="mesAtual"></span></div>
+<div class="card">Mês: <span id="mesAtual"></span></div>
 <div class="card">Itens: <span id="total"></span></div>
 </div>
-
 <canvas id="chart"></canvas>
 </div>
 
 <!-- LISTA -->
 <div id="lista" class="hidden">
-<input id="nome" placeholder="Produto">
-<input id="preco" placeholder="Preço">
-<button onclick="addProduto()">Adicionar</button>
-
 <div class="lista" id="listaProdutos"></div>
 </div>
 
@@ -110,7 +101,7 @@ button{
 <canvas id="chartGastos"></canvas>
 </div>
 
-<!-- HISTORICO -->
+<!-- HISTÓRICO -->
 <div id="historico" class="hidden">
 <canvas id="chartHistorico"></canvas>
 </div>
@@ -119,107 +110,110 @@ button{
 
 <script>
 
-// DATA
 let data = JSON.parse(localStorage.getItem("data")) || {
- produtos:[],
- historico:{}
+
+produtos:[
+
+// HORTIFRUTI
+{nome:"Alface",categoria:"Hortifruti",casa:0,necessario:1,comprar:1,preco:0,comprado:0},
+{nome:"Tomate",categoria:"Hortifruti",casa:0,necessario:3,comprar:3,preco:0,comprado:0},
+{nome:"Cenoura",categoria:"Hortifruti",casa:0,necessario:2,comprar:2,preco:0,comprado:0},
+{nome:"Cebola",categoria:"Hortifruti",casa:0,necessario:3,comprar:3,preco:0,comprado:0},
+{nome:"Maçã",categoria:"Hortifruti",casa:0,necessario:6,comprar:6,preco:0,comprado:0},
+
+// CARNES
+{nome:"Carne bovina",categoria:"Carnes",casa:0,necessario:2,comprar:2,preco:0,comprado:0},
+{nome:"Carne moída",categoria:"Carnes",casa:0,necessario:2,comprar:2,preco:0,comprado:0},
+
+// MERCEARIA
+{nome:"Arroz",categoria:"Mercearia",casa:0,necessario:2,comprar:2,preco:0,comprado:0},
+{nome:"Feijão",categoria:"Mercearia",casa:0,necessario:2,comprar:2,preco:0,comprado:0},
+
+// LIMPEZA
+{nome:"Detergente",categoria:"Limpeza",casa:0,necessario:3,comprar:3,preco:0,comprado:0},
+{nome:"Sabão",categoria:"Limpeza",casa:0,necessario:1,comprar:1,preco:0,comprado:0}
+
+],
+
+historico:{}
+
 };
 
-// DATA ATUAL
-let hoje = new Date();
-let mes = hoje.getMonth();
-let ano = hoje.getFullYear();
-let chaveMes = `${mes}-${ano}`;
+// DATA
+let hoje=new Date();
+let chaveMes=`${hoje.getMonth()+1}/${hoje.getFullYear()}`;
 
-// SALVAR
 function save(){
  localStorage.setItem("data",JSON.stringify(data));
  render();
 }
 
-// NAVEGAÇÃO
 function setView(v,el){
  document.querySelectorAll(".icon").forEach(i=>i.classList.remove("active"));
  el.classList.add("active");
-
  document.querySelectorAll(".main > div").forEach(d=>d.classList.add("hidden"));
  document.getElementById(v).classList.remove("hidden");
 }
 
-// ADD
-function addProduto(){
- data.produtos.push({
-  nome:nome.value,
-  preco:Number(preco.value),
-  comprado:0
- });
- save();
-}
-
-// COMPRAR
 function comprar(i){
  data.produtos[i].comprado++;
  save();
 }
 
-// RENDER
 function render(){
 
- let gasto=0;
+ let html="",gasto=0,gastoCat={};
 
- data.produtos.forEach(p=>{
-  gasto += p.preco * p.comprado;
+ data.produtos.forEach((p,i)=>{
+
+ let valor=p.preco*p.comprado;
+ gasto+=valor;
+
+ gastoCat[p.categoria]=(gastoCat[p.categoria]||0)+valor;
+
+ html+=`
+ <div class="item">
+ <b>${p.nome}</b><br>
+ Comprar: ${p.comprar}<br>
+ Comprado: ${p.comprado}<br>
+ Preço: <input value="${p.preco}" onchange="data.produtos[${i}].preco=this.value;save()"><br>
+ Total: R$ ${(valor).toFixed(2)}<br>
+ <button onclick="comprar(${i})">+ Comprar</button>
+ </div>`;
  });
 
- // salvar histórico automático
- data.historico[chaveMes] = gasto;
+ listaProdutos.innerHTML=html;
 
- // previsão IA (média últimos meses)
- let valores = Object.values(data.historico);
- let media = valores.reduce((a,b)=>a+b,0)/ (valores.length||1);
+ // histórico
+ data.historico[chaveMes]=gasto;
 
- // UI
+ // previsão IA (média)
+ let valores=Object.values(data.historico);
+ let media=valores.reduce((a,b)=>a+b,0)/(valores.length||1);
+
  gastoAtual.innerText=gasto.toFixed(2);
  previsao.innerText=media.toFixed(2);
  mesAtual.innerText=chaveMes;
  total.innerText=data.produtos.length;
 
- // lista
- let html="";
- data.produtos.forEach((p,i)=>{
-  html+=`
-  <div class="item">
-  ${p.nome}<br>
-  R$ ${p.preco}<br>
-  Comprado: ${p.comprado}<br>
-  <button onclick="comprar(${i})">Comprar</button>
-  </div>`;
- });
- listaProdutos.innerHTML=html;
-
- // gráfico atual
+ // gráficos
  if(window.chart)chart.destroy();
  chart=new Chart(chart,{
   type:'bar',
-  data:{
-   labels:data.produtos.map(p=>p.nome),
-   datasets:[{data:data.produtos.map(p=>p.preco*p.comprado)}]
-  }
+  data:{labels:Object.keys(gastoCat),datasets:[{data:Object.values(gastoCat)}]}
  });
 
- // gráfico histórico
  if(window.chartHistorico)chartHistorico.destroy();
  chartHistorico=new Chart(chartHistorico,{
   type:'line',
-  data:{
-   labels:Object.keys(data.historico),
-   datasets:[{data:Object.values(data.historico)}]
-  }
+  data:{labels:Object.keys(data.historico),datasets:[{data:Object.values(data.historico)}]}
  });
+
 }
 
 render();
 
 </script>
+
 </body>
 </html>
