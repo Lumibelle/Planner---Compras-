@@ -4,36 +4,39 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Smart List PRO+</title>
+    
+    <!-- CONEXÕES PARA O APLICATIVO -->
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="icon.png">
+    <meta name="theme-color" content="#6c63ff">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
     <script src="https://jsdelivr.net"></script>
     <style>
         *{margin:0;padding:0;box-sizing:border-box;font-family:system-ui,-apple-system,sans-serif}
         body{display:flex;flex-direction:column;min-height:100vh;background:#f4f5fb;color:#333}
-        /* Sidebar adaptada para mobile */
-        .sidebar{height:5px;width:100%;background:linear-gradient(90deg,#6c63ff,#8f94fb)}
-        .main{flex:1;padding:15px;overflow-x:hidden}
+        .sidebar{height:6px;width:100%;background:linear-gradient(90deg,#6c63ff,#8f94fb)}
+        .main{flex:1;padding:15px;padding-bottom:50px}
         .header{display:flex;flex-direction:column;margin-bottom:15px;gap:10px}
-        input{padding:12px;border-radius:10px;border:1px solid #ddd;font-size:16px;width:100%}
+        h2#user{font-size:22px;color:#444}
+        input#busca{padding:12px;border-radius:12px;border:1px solid #ddd;font-size:16px;width:100%;box-shadow:0 2px 5px rgba(0,0,0,0.02)}
         .cards{display:grid;grid-template-columns:1fr;gap:15px;margin-bottom:20px}
-        .big-card{background:linear-gradient(135deg,#6c63ff,#ff7eb3);color:white;padding:20px;border-radius:20px;box-shadow:0 10px 20px rgba(108,99,255,0.2)}
-        .small-card{background:white;padding:15px;border-radius:20px;box-shadow:0 8px 20px rgba(0,0,0,0.05);display:flex;justify-content:center}
-        #grafico{max-height:200px !important}
+        .big-card{background:linear-gradient(135deg,#6c63ff,#ff7eb3);color:white;padding:22px;border-radius:22px;box-shadow:0 10px 20px rgba(108,99,255,0.2)}
+        .small-card{background:white;padding:15px;border-radius:22px;box-shadow:0 8px 20px rgba(0,0,0,0.05);display:flex;justify-content:center;align-items:center}
+        #grafico{max-height:180px !important}
         .categoria{margin-top:25px}
-        .categoria h3{color:#666;margin-bottom:12px;font-size:14px;text-transform:uppercase;letter-spacing:1px}
-        .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px}
-        .item{background:white;padding:15px;border-radius:18px;box-shadow:0 4px 12px rgba(0,0,0,0.05);border:1px solid #eee}
-        .badge{font-size:11px;padding:4px 8px;border-radius:8px;margin:8px 0;display:inline-block;font-weight:bold}
+        .categoria h3{color:#888;margin-bottom:12px;font-size:13px;text-transform:uppercase;letter-spacing:1.5px}
+        .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}
+        .item{background:white;padding:15px;border-radius:18px;box-shadow:0 4px 12px rgba(0,0,0,0.04);border:1px solid #eee;transition:0.2s}
+        .badge{font-size:10px;padding:5px 10px;border-radius:8px;margin:10px 0;display:inline-block;font-weight:bold;text-transform:uppercase}
         .red{background:#ffe5e5;color:#d33}
-        .yellow{background:#fff5cc;color:#b58b00}
         .green{background:#e6ffea;color:#2e9b4f}
-        .actions{display:flex;flex-wrap:wrap;gap:5px;margin-top:10px}
-        button{flex:1;min-width:40px;padding:8px;border:none;border-radius:10px;background:#6c63ff;color:white;cursor:pointer;font-size:14px}
-        .delete{background:#ff4d4d;max-width:40px}
-        
-        @media(min-width: 768px) {
-            body{flex-direction:row}
-            .sidebar{width:80px;height:100vh}
-            .cards{grid-template-columns:2fr 1fr}
-        }
+        .actions{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+        button{flex:1;min-width:42px;padding:10px;border:none;border-radius:12px;background:#6c63ff;color:white;cursor:pointer;font-size:14px;font-weight:bold}
+        button:active{transform:scale(0.95)}
+        .delete{background:#f1f1f1;color:#ff4d4d;max-width:42px}
+        @media(min-width: 768px) { body{flex-direction:row} .sidebar{width:80px;height:100vh} .cards{grid-template-columns:2fr 1fr} }
     </style>
 </head>
 <body>
@@ -45,8 +48,8 @@
         </div>
         <div class="cards">
             <div class="big-card">
-                <h3>Resumo</h3>
-                <h2 id="resumo" style="margin-top:10px">R$ 0.00</h2>
+                <p style="opacity:0.9;font-size:14px">Total da Lista</p>
+                <h2 id="resumo" style="font-size:32px;margin-top:5px">R$ 0.00</h2>
             </div>
             <div class="small-card">
                 <canvas id="grafico"></canvas>
@@ -56,7 +59,7 @@
     </div>
 
 <script>
-// Correção do Usuário para não travar no mobile
+// Nome do Usuário
 let user = localStorage.getItem("user");
 if(!user){
     user = prompt("Qual o seu nome?") || "Visitante";
@@ -66,22 +69,19 @@ document.getElementById("user").innerText = "Olá, " + user;
 
 const base = [
     ["HORTIFRUTI",["Alface","Rúcula","Tomate","Cenoura","Pimentão","Cebola","Limão","Morango","Uva","Manga","Pera","Maçã","Maracujá","Laranja","Abacaxi"]],
-    ["CARNES",["Carne bovina","Carne moída","Linguiça"]],
-    ["LATICÍNIOS",["Queijo","Parmesão","Requeijão","Creme de leite","Manteiga","Danone","Leite"]],
-    ["MERCEARIA",["Feijão","Macarrão","Café","Chá","Sal","Açúcar","Molho","Milho","Farofa","Tapioca","Óleo","Azeite","Vinagre","Bicarbonato"]],
-    ["CONGELADOS",["Peixe","Legumes","Frango","Pão de queijo","Batata frita"]],
-    ["PADARIA",["Torrada","Pão","Biscoito"]],
-    ["LIMPEZA",["Detergente","Sabão","Amaciante","Veja","Desinfetante","Esponja","Álcool"]],
-    ["HIGIENE",["Shampoo","Condicionador","Sabonete","Pasta de dente","Papel higiênico","Desodorante"]]
+    ["CARNES",["Carne bovina","Carne moída","Linguiça","Frango","Peixe"]],
+    ["LATICÍNIOS",["Queijo","Parmesão","Requeijão","Creme de leite","Manteiga","Danone","Leite","Iogurte"]],
+    ["MERCEARIA",["Feijão","Macarrão","Café","Chá","Sal","Açúcar","Molho de Tomate","Milho","Farofa","Tapioca","Óleo","Azeite","Vinagre","Arroz"]],
+    ["PADARIA",["Torrada","Pão Francês","Pão de Forma","Biscoito","Bolo"]],
+    ["LIMPEZA",["Detergente","Sabão em Pó","Amaciante","Desinfetante","Esponja","Álcool","Papel Toalha"]],
+    ["HIGIENE",["Shampoo","Condicionador","Sabonete","Pasta de dente","Papel higiênico","Desodorante","Fio Dental"]]
 ];
 
 let items = JSON.parse(localStorage.getItem("items")||"null");
 if(!items){
     items=[];
     base.forEach(([cat,arr])=>{
-        arr.forEach(nome=>{
-            items.push({nome,categoria:cat,qtd:1,estoque:0,preco:0,comprado:false});
-        });
+        arr.forEach(nome=>{ items.push({nome,categoria:cat,qtd:1,estoque:0,preco:0,comprado:false}); });
     });
 }
 
@@ -91,29 +91,25 @@ function status(i){
     return ['green','🟢 OK'];
 }
 
-function toggleCheck(i){items[i].comprado=!items[i].comprado;save()}
-function comprar(i){items[i].estoque++;save()}
-function remover(i){if(confirm('Remover item?')){items.splice(i,1);save()}}
+function toggleCheck(i){ items[index=i].comprado=!items[i].comprado; save(); }
+function comprar(i){ items[i].estoque++; save(); }
+function remover(i){ if(confirm('Excluir este item?')){ items.splice(i,1); save(); } }
 function editarPreco(i){
     let p = prompt("Preço da unidade:", items[i].preco);
     if(p!==null) items[i].preco = parseFloat(p.replace(',','.'));
     save();
 }
 
-function save(){localStorage.setItem("items",JSON.stringify(items));render()}
+function save(){ localStorage.setItem("items",JSON.stringify(items)); render(); }
 
 function render(){
-    let total=0;
-    let catData={};
-    let html="";
+    let total=0; let catData={}; let html="";
     let termo = document.getElementById("busca").value.toLowerCase();
 
     base.forEach(([cat])=>{
         let section="";
         items.forEach((i,index)=>{
-            if(i.categoria!==cat) return;
-            if(termo && !i.nome.toLowerCase().includes(termo)) return;
-
+            if(i.categoria!==cat || (termo && !i.nome.toLowerCase().includes(termo))) return;
             let [cls,label]=status(i);
             let subtotal = i.preco * i.estoque;
             total += subtotal;
@@ -122,12 +118,12 @@ function render(){
             section+=`
             <div class='item'>
                 <b>${i.nome}</b><br>
-                <small>Qtd: ${i.estoque}</small><br>
+                <small style='color:#999'>Quantidade: ${i.estoque}</small><br>
                 <div class='badge ${cls}'>${label}</div>
                 <div class='actions'>
                     <button onclick='comprar(${index})'>+1</button>
-                    <button onclick='toggleCheck(${index})'>✔</button>
-                    <button onclick='editarPreco(${index})'>R$</button>
+                    <button onclick='toggleCheck(${index})' style='background:#2e9b4f'>✔</button>
+                    <button onclick='editarPreco(${index})' style='background:#ffb100'>$</button>
                     <button class='delete' onclick='remover(${index})'>🗑</button>
                 </div>
             </div>`;
@@ -136,7 +132,7 @@ function render(){
     });
 
     document.getElementById("lista").innerHTML=html;
-    document.getElementById("resumo").innerText = "Total: R$ " + total.toFixed(2);
+    document.getElementById("resumo").innerText = "R$ " + total.toFixed(2);
 
     if(Object.keys(catData).length > 0){
         if(window.chart) window.chart.destroy();
@@ -144,9 +140,9 @@ function render(){
             type:'doughnut',
             data:{
                 labels:Object.keys(catData),
-                datasets:[{data:Object.values(catData),backgroundColor:['#6c63ff','#ff7eb3','#FFD700','#FF8C00','#40E0D0']}]
+                datasets:[{data:Object.values(catData),backgroundColor:['#6c63ff','#ff7eb3','#FFD700','#FF8C00','#40E0D0','#9c27b0','#00bcd4']}]
             },
-            options:{plugins:{legend:{display:false}}}
+            options:{plugins:{legend:{display:false}},cutout:'70%'}
         });
     }
 }
