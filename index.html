@@ -1,152 +1,146 @@
-<!DOCTYPE html>
-<html lang="pt-br">
+<!DOCTYPE html><html lang="pt-br">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Smart List PRO+</title>
-    
-    <!-- CONEXÕES PARA O APLICATIVO -->
-    <link rel="manifest" href="manifest.json">
-    <link rel="apple-touch-icon" href="icon.png">
-    <meta name="theme-color" content="#6c63ff">
-    <meta name="mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-
-    <script src="https://jsdelivr.net"></script>
-    <style>
-        *{margin:0;padding:0;box-sizing:border-box;font-family:system-ui,-apple-system,sans-serif}
-        body{display:flex;flex-direction:column;min-height:100vh;background:#f4f5fb;color:#333}
-        .sidebar{height:6px;width:100%;background:linear-gradient(90deg,#6c63ff,#8f94fb)}
-        .main{flex:1;padding:15px;padding-bottom:50px}
-        .header{display:flex;flex-direction:column;margin-bottom:15px;gap:10px}
-        h2#user{font-size:22px;color:#444}
-        input#busca{padding:12px;border-radius:12px;border:1px solid #ddd;font-size:16px;width:100%;box-shadow:0 2px 5px rgba(0,0,0,0.02)}
-        .cards{display:grid;grid-template-columns:1fr;gap:15px;margin-bottom:20px}
-        .big-card{background:linear-gradient(135deg,#6c63ff,#ff7eb3);color:white;padding:22px;border-radius:22px;box-shadow:0 10px 20px rgba(108,99,255,0.2)}
-        .small-card{background:white;padding:15px;border-radius:22px;box-shadow:0 8px 20px rgba(0,0,0,0.05);display:flex;justify-content:center;align-items:center}
-        #grafico{max-height:180px !important}
-        .categoria{margin-top:25px}
-        .categoria h3{color:#888;margin-bottom:12px;font-size:13px;text-transform:uppercase;letter-spacing:1.5px}
-        .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}
-        .item{background:white;padding:15px;border-radius:18px;box-shadow:0 4px 12px rgba(0,0,0,0.04);border:1px solid #eee;transition:0.2s}
-        .badge{font-size:10px;padding:5px 10px;border-radius:8px;margin:10px 0;display:inline-block;font-weight:bold;text-transform:uppercase}
-        .red{background:#ffe5e5;color:#d33}
-        .green{background:#e6ffea;color:#2e9b4f}
-        .actions{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
-        button{flex:1;min-width:42px;padding:10px;border:none;border-radius:12px;background:#6c63ff;color:white;cursor:pointer;font-size:14px;font-weight:bold}
-        button:active{transform:scale(0.95)}
-        .delete{background:#f1f1f1;color:#ff4d4d;max-width:42px}
-        @media(min-width: 768px) { body{flex-direction:row} .sidebar{width:80px;height:100vh} .cards{grid-template-columns:2fr 1fr} }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Smart List PRO ULTIMATE</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:system-ui}
+body{background:#f4f5fb;padding:20px}
+.header{display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap}
+input,select{padding:8px;border-radius:8px;border:1px solid #ddd}
+button{padding:6px 10px;border:none;border-radius:8px;background:#6c63ff;color:white;cursor:pointer}
+.delete{background:#ff4d4d}
+.categoria{margin-top:25px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px}
+.item{padding:10px;border-radius:12px;color:#fff}
+.card{background:white;padding:15px;border-radius:15px;margin-bottom:20px}
+.ok{background:#2ecc71 !important}
+</style>
 </head>
-<body>
-    <div class="sidebar"></div>
-    <div class="main">
-        <div class="header">
-            <h2 id="user">Olá!</h2>
-            <input id="busca" placeholder="🔎 Buscar produto..." oninput="render()">
-        </div>
-        <div class="cards">
-            <div class="big-card">
-                <p style="opacity:0.9;font-size:14px">Total da Lista</p>
-                <h2 id="resumo" style="font-size:32px;margin-top:5px">R$ 0.00</h2>
-            </div>
-            <div class="small-card">
-                <canvas id="grafico"></canvas>
-            </div>
-        </div>
-        <div id="lista"></div>
-    </div>
+<body><h2>Smart List</h2><div class="header">
+<input id="busca" placeholder="Buscar produto..." oninput="render()"><select id="mes" onchange="render()">
+<option value="todos">Todos os meses</option>
+<option value="jan">Janeiro</option>
+<option value="fev">Fevereiro</option>
+<option value="mar">Março</option>
+</select><input id="nomeProduto" placeholder="Novo produto">
+<select id="categoriaSelect"></select>
+<button onclick="addProduto()">Adicionar</button><input id="novaCategoria" placeholder="Nova categoria">
+<input id="corCategoria" type="color">
+<button onclick="addCategoria()">+ Categoria</button>
+</div><div class="card">
+<h3>Resumo</h3>
+<p id="resumo"></p>
+<canvas id="grafico"></canvas>
+</div><div id="lista"></div><script>
 
-<script>
-// Nome do Usuário
-let user = localStorage.getItem("user");
-if(!user){
-    user = prompt("Qual o seu nome?") || "Visitante";
-    localStorage.setItem("user", user);
-}
-document.getElementById("user").innerText = "Olá, " + user;
+let data = JSON.parse(localStorage.getItem("data")) || {
+  categorias: {
+    "HORTIFRUTI":"#6c63ff",
+    "CARNES":"#ff7b7b"
+  },
+  produtos: []
+};
 
-const base = [
-    ["HORTIFRUTI",["Alface","Rúcula","Tomate","Cenoura","Pimentão","Cebola","Limão","Morango","Uva","Manga","Pera","Maçã","Maracujá","Laranja","Abacaxi"]],
-    ["CARNES",["Carne bovina","Carne moída","Linguiça","Frango","Peixe"]],
-    ["LATICÍNIOS",["Queijo","Parmesão","Requeijão","Creme de leite","Manteiga","Danone","Leite","Iogurte"]],
-    ["MERCEARIA",["Feijão","Macarrão","Café","Chá","Sal","Açúcar","Molho de Tomate","Milho","Farofa","Tapioca","Óleo","Azeite","Vinagre","Arroz"]],
-    ["PADARIA",["Torrada","Pão Francês","Pão de Forma","Biscoito","Bolo"]],
-    ["LIMPEZA",["Detergente","Sabão em Pó","Amaciante","Desinfetante","Esponja","Álcool","Papel Toalha"]],
-    ["HIGIENE",["Shampoo","Condicionador","Sabonete","Pasta de dente","Papel higiênico","Desodorante","Fio Dental"]]
-];
-
-let items = JSON.parse(localStorage.getItem("items")||"null");
-if(!items){
-    items=[];
-    base.forEach(([cat,arr])=>{
-        arr.forEach(nome=>{ items.push({nome,categoria:cat,qtd:1,estoque:0,preco:0,comprado:false}); });
-    });
+function save(){
+  localStorage.setItem("data", JSON.stringify(data));
+  render();
 }
 
-function status(i){
-    if(i.comprado) return ['green','✔ NO CARRINHO'];
-    if(i.estoque==0) return ['red','🔴 COMPRAR'];
-    return ['green','🟢 OK'];
+function atualizarSelect(){
+  let select = document.getElementById("categoriaSelect");
+  select.innerHTML = "";
+  Object.keys(data.categorias).forEach(cat=>{
+    select.innerHTML += `<option>${cat}</option>`;
+  });
 }
 
-function toggleCheck(i){ items[index=i].comprado=!items[i].comprado; save(); }
-function comprar(i){ items[i].estoque++; save(); }
-function remover(i){ if(confirm('Excluir este item?')){ items.splice(i,1); save(); } }
-function editarPreco(i){
-    let p = prompt("Preço da unidade:", items[i].preco);
-    if(p!==null) items[i].preco = parseFloat(p.replace(',','.'));
+function addCategoria(){
+  let nome = document.getElementById("novaCategoria").value;
+  let cor = document.getElementById("corCategoria").value;
+  if(!nome) return;
+  data.categorias[nome] = cor;
+  save();
+}
+
+function removeCategoria(cat){
+  if(confirm("Remover categoria?")){
+    delete data.categorias[cat];
+    data.produtos = data.produtos.filter(p=>p.categoria!==cat);
     save();
+  }
 }
 
-function save(){ localStorage.setItem("items",JSON.stringify(items)); render(); }
+function addProduto(){
+  let nome = document.getElementById("nomeProduto").value;
+  let cat = document.getElementById("categoriaSelect").value;
+  let mes = document.getElementById("mes").value;
+  if(!nome) return;
+  data.produtos.push({nome,categoria:cat,mes:mes,comprado:false});
+  save();
+}
+
+function removeProduto(i){
+  data.produtos.splice(i,1);
+  save();
+}
+
+function toggle(i){
+  data.produtos[i].comprado = !data.produtos[i].comprado;
+  save();
+}
 
 function render(){
-    let total=0; let catData={}; let html="";
-    let termo = document.getElementById("busca").value.toLowerCase();
+  atualizarSelect();
 
-    base.forEach(([cat])=>{
-        let section="";
-        items.forEach((i,index)=>{
-            if(i.categoria!==cat || (termo && !i.nome.toLowerCase().includes(termo))) return;
-            let [cls,label]=status(i);
-            let subtotal = i.preco * i.estoque;
-            total += subtotal;
-            if(subtotal > 0) catData[cat]=(catData[cat]||0)+subtotal;
+  let busca = document.getElementById("busca").value.toLowerCase();
+  let mesFiltro = document.getElementById("mes").value;
 
-            section+=`
-            <div class='item'>
-                <b>${i.nome}</b><br>
-                <small style='color:#999'>Quantidade: ${i.estoque}</small><br>
-                <div class='badge ${cls}'>${label}</div>
-                <div class='actions'>
-                    <button onclick='comprar(${index})'>+1</button>
-                    <button onclick='toggleCheck(${index})' style='background:#2e9b4f'>✔</button>
-                    <button onclick='editarPreco(${index})' style='background:#ffb100'>$</button>
-                    <button class='delete' onclick='remover(${index})'>🗑</button>
-                </div>
-            </div>`;
-        });
-        if(section) html += `<div class='categoria'><h3>${cat}</h3><div class='grid'>${section}</div></div>`;
+  let html = "";
+  let total = 0;
+  let contagem = {};
+
+  Object.keys(data.categorias).forEach(cat=>{
+    let cor = data.categorias[cat];
+
+    let itens = data.produtos.filter(p=>
+      p.categoria===cat &&
+      p.nome.toLowerCase().includes(busca) &&
+      (mesFiltro === "todos" || p.mes === mesFiltro)
+    );
+
+    if(itens.length === 0) return;
+
+    contagem[cat] = itens.length;
+    total += itens.length;
+
+    html += `<div class='categoria'>
+      <h3>${cat} <button class='delete' onclick="removeCategoria('${cat}')">X</button></h3>
+      <div class='grid'>`;
+
+    itens.forEach((p,i)=>{
+      html += `<div class='item ${p.comprado ? "ok" : ""}' style='background:${cor}'>
+        ${p.nome}<br>
+        <button onclick='toggle(${i})'>✔</button>
+        <button class='delete' onclick='removeProduto(${i})'>🗑</button>
+      </div>`;
     });
 
-    document.getElementById("lista").innerHTML=html;
-    document.getElementById("resumo").innerText = "R$ " + total.toFixed(2);
+    html += `</div></div>`;
+  });
 
-    if(Object.keys(catData).length > 0){
-        if(window.chart) window.chart.destroy();
-        window.chart = new Chart(document.getElementById("grafico"),{
-            type:'doughnut',
-            data:{
-                labels:Object.keys(catData),
-                datasets:[{data:Object.values(catData),backgroundColor:['#6c63ff','#ff7eb3','#FFD700','#FF8C00','#40E0D0','#9c27b0','#00bcd4']}]
-            },
-            options:{plugins:{legend:{display:false}},cutout:'70%'}
-        });
-    }
+  document.getElementById("lista").innerHTML = html;
+  document.getElementById("resumo").innerText = `Total: ${total}`;
+
+  if(window.chart) chart.destroy();
+  window.chart = new Chart(document.getElementById("grafico"),{
+    type:'doughnut',
+    data:{labels:Object.keys(contagem),datasets:[{data:Object.values(contagem)}]}
+  });
 }
+
 render();
-</script>
-</body>
+
+</script></body>
 </html>
