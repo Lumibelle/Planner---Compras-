@@ -1,125 +1,156 @@
-<!DOCTYPE html><html lang="pt-br">
+<!DOCTYPE html>
+<html lang="pt-br">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Smart List PRO+</title>
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<style>
-*{margin:0;padding:0;box-sizing:border-box;font-family:system-ui}
-body{display:flex;height:100vh;background:#f4f5fb}
-.sidebar{width:90px;background:linear-gradient(180deg,#6c63ff,#8f94fb)}
-.main{flex:1;padding:20px;overflow:auto}
-.header{display:flex;justify-content:space-between;margin-bottom:15px;gap:10px}
-input{padding:8px;border-radius:8px;border:1px solid #ddd}
-.cards{display:grid;grid-template-columns:2fr 1fr;gap:15px}
-.big-card{background:linear-gradient(135deg,#6c63ff,#ff7eb3);color:white;padding:20px;border-radius:20px}
-.small-card{background:white;padding:15px;border-radius:20px;box-shadow:0 8px 20px rgba(0,0,0,0.08)}
-.categoria{margin-top:25px}
-.categoria h3{color:#666;margin-bottom:10px}
-.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px}
-.item{background:white;padding:12px;border-radius:14px;box-shadow:0 6px 15px rgba(0,0,0,0.08)}
-.badge{font-size:12px;padding:3px 6px;border-radius:6px;margin-top:5px;display:inline-block}
-.red{background:#ffe5e5;color:#d33}
-.yellow{background:#fff5cc;color:#b58b00}
-.green{background:#e6ffea;color:#2e9b4f}
-button{margin-top:6px;margin-right:4px;padding:5px 8px;border:none;border-radius:8px;background:#6c63ff;color:white;cursor:pointer}
-.delete{background:#ff4d4d}
-</style>
-</head><link rel="manifest" href="manifest.json">
-<body><div class="sidebar"></div><div class="main">
-<div class="header">
-<h2 id="user"></h2>
-<input id="busca" placeholder="Buscar produto..." oninput="render()">
-</div><div class="cards">
-<div class="big-card"><h3>Resumo</h3><p id="resumo"></p></div>
-<div class="small-card"><canvas id="grafico"></canvas></div>
-</div><div id="lista"></div>
-</div><script>
-let user = localStorage.getItem("user") || prompt("Seu nome:");
-localStorage.setItem("user", user);
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Smart List PRO+</title>
+    <script src="https://jsdelivr.net"></script>
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box;font-family:system-ui,-apple-system,sans-serif}
+        body{display:flex;flex-direction:column;min-height:100vh;background:#f4f5fb;color:#333}
+        /* Sidebar adaptada para mobile */
+        .sidebar{height:5px;width:100%;background:linear-gradient(90deg,#6c63ff,#8f94fb)}
+        .main{flex:1;padding:15px;overflow-x:hidden}
+        .header{display:flex;flex-direction:column;margin-bottom:15px;gap:10px}
+        input{padding:12px;border-radius:10px;border:1px solid #ddd;font-size:16px;width:100%}
+        .cards{display:grid;grid-template-columns:1fr;gap:15px;margin-bottom:20px}
+        .big-card{background:linear-gradient(135deg,#6c63ff,#ff7eb3);color:white;padding:20px;border-radius:20px;box-shadow:0 10px 20px rgba(108,99,255,0.2)}
+        .small-card{background:white;padding:15px;border-radius:20px;box-shadow:0 8px 20px rgba(0,0,0,0.05);display:flex;justify-content:center}
+        #grafico{max-height:200px !important}
+        .categoria{margin-top:25px}
+        .categoria h3{color:#666;margin-bottom:12px;font-size:14px;text-transform:uppercase;letter-spacing:1px}
+        .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px}
+        .item{background:white;padding:15px;border-radius:18px;box-shadow:0 4px 12px rgba(0,0,0,0.05);border:1px solid #eee}
+        .badge{font-size:11px;padding:4px 8px;border-radius:8px;margin:8px 0;display:inline-block;font-weight:bold}
+        .red{background:#ffe5e5;color:#d33}
+        .yellow{background:#fff5cc;color:#b58b00}
+        .green{background:#e6ffea;color:#2e9b4f}
+        .actions{display:flex;flex-wrap:wrap;gap:5px;margin-top:10px}
+        button{flex:1;min-width:40px;padding:8px;border:none;border-radius:10px;background:#6c63ff;color:white;cursor:pointer;font-size:14px}
+        .delete{background:#ff4d4d;max-width:40px}
+        
+        @media(min-width: 768px) {
+            body{flex-direction:row}
+            .sidebar{width:80px;height:100vh}
+            .cards{grid-template-columns:2fr 1fr}
+        }
+    </style>
+</head>
+<body>
+    <div class="sidebar"></div>
+    <div class="main">
+        <div class="header">
+            <h2 id="user">Olá!</h2>
+            <input id="busca" placeholder="🔎 Buscar produto..." oninput="render()">
+        </div>
+        <div class="cards">
+            <div class="big-card">
+                <h3>Resumo</h3>
+                <h2 id="resumo" style="margin-top:10px">R$ 0.00</h2>
+            </div>
+            <div class="small-card">
+                <canvas id="grafico"></canvas>
+            </div>
+        </div>
+        <div id="lista"></div>
+    </div>
+
+<script>
+// Correção do Usuário para não travar no mobile
+let user = localStorage.getItem("user");
+if(!user){
+    user = prompt("Qual o seu nome?") || "Visitante";
+    localStorage.setItem("user", user);
+}
 document.getElementById("user").innerText = "Olá, " + user;
 
 const base = [
-["HORTIFRUTI",["Alface","Rúcula","Tomate","Cenoura","Pimentão","Cebola","Limão","Morango","Uva","Manga","Pera","Maçã","Maracujá","Laranja","Abacaxi"]],
-["CARNES",["Carne bovina","Carne moída","Linguiça"]],
-["LATICÍNIOS",["Queijo","Parmesão","Requeijão","Creme de leite","Manteiga","Danone","Leite"]],
-["MERCEARIA",["Feijão","Macarrão","Café","Chá","Sal","Açúcar","Molho","Milho","Farofa","Tapioca","Óleo","Azeite","Vinagre","Bicarbonato","Molho inglês"]],
-["CONGELADOS",["Peixe","Legumes","Frango","Pão de queijo","Batata frita","Coxa sobrecoxa"]],
-["PADARIA",["Torrada","Pão","Biscoito"]],
-["LIMPEZA",["Detergente","Sabão","Amaciante","Veja","Desinfetante","Esponja","Álcool","Lustra móveis","Repelente"]],
-["HIGIENE",["Shampoo","Condicionador","Sabonete","Pasta de dente","Papel higiênico","Desodorante","Absorvente"]]
+    ["HORTIFRUTI",["Alface","Rúcula","Tomate","Cenoura","Pimentão","Cebola","Limão","Morango","Uva","Manga","Pera","Maçã","Maracujá","Laranja","Abacaxi"]],
+    ["CARNES",["Carne bovina","Carne moída","Linguiça"]],
+    ["LATICÍNIOS",["Queijo","Parmesão","Requeijão","Creme de leite","Manteiga","Danone","Leite"]],
+    ["MERCEARIA",["Feijão","Macarrão","Café","Chá","Sal","Açúcar","Molho","Milho","Farofa","Tapioca","Óleo","Azeite","Vinagre","Bicarbonato"]],
+    ["CONGELADOS",["Peixe","Legumes","Frango","Pão de queijo","Batata frita"]],
+    ["PADARIA",["Torrada","Pão","Biscoito"]],
+    ["LIMPEZA",["Detergente","Sabão","Amaciante","Veja","Desinfetante","Esponja","Álcool"]],
+    ["HIGIENE",["Shampoo","Condicionador","Sabonete","Pasta de dente","Papel higiênico","Desodorante"]]
 ];
 
 let items = JSON.parse(localStorage.getItem("items")||"null");
 if(!items){
-  items=[];
-  base.forEach(([cat,arr])=>{
-    arr.forEach(nome=>{
-      items.push({nome,categoria:cat,qtd:1,estoque:0,preco:0,comprado:false});
+    items=[];
+    base.forEach(([cat,arr])=>{
+        arr.forEach(nome=>{
+            items.push({nome,categoria:cat,qtd:1,estoque:0,preco:0,comprado:false});
+        });
     });
-  });
 }
 
 function status(i){
-  if(i.comprado) return ['green','✔ Comprado'];
-  if(i.estoque==0) return ['red','🔴 Comprar'];
-  if(i.estoque<i.qtd) return ['yellow','🟡 Verificar'];
-  return ['green','🟢 OK'];
+    if(i.comprado) return ['green','✔ NO CARRINHO'];
+    if(i.estoque==0) return ['red','🔴 COMPRAR'];
+    return ['green','🟢 OK'];
 }
 
 function toggleCheck(i){items[i].comprado=!items[i].comprado;save()}
 function comprar(i){items[i].estoque++;save()}
-function remover(i){ if(confirm('Remover item?')){ items.splice(i,1); save(); }}
-
+function remover(i){if(confirm('Remover item?')){items.splice(i,1);save()}}
 function editarPreco(i){
-  let p = prompt("Preço:", items[i].preco);
-  if(p!==null) items[i].preco = +p;
-  save();
+    let p = prompt("Preço da unidade:", items[i].preco);
+    if(p!==null) items[i].preco = parseFloat(p.replace(',','.'));
+    save();
 }
 
 function save(){localStorage.setItem("items",JSON.stringify(items));render()}
 
 function render(){
-  let total=0;
-  let catData={};
-  let html="";
-  let termo = busca.value.toLowerCase();
+    let total=0;
+    let catData={};
+    let html="";
+    let termo = document.getElementById("busca").value.toLowerCase();
 
-  base.forEach(([cat])=>{
-    let section="";
+    base.forEach(([cat])=>{
+        let section="";
+        items.forEach((i,index)=>{
+            if(i.categoria!==cat) return;
+            if(termo && !i.nome.toLowerCase().includes(termo)) return;
 
-    items.forEach((i,index)=>{
-      if(i.categoria!==cat) return;
-      if(termo && !i.nome.toLowerCase().includes(termo)) return;
+            let [cls,label]=status(i);
+            let subtotal = i.preco * i.estoque;
+            total += subtotal;
+            if(subtotal > 0) catData[cat]=(catData[cat]||0)+subtotal;
 
-      let [cls,label]=status(i);
-      total+=i.preco*i.estoque;
-      catData[cat]=(catData[cat]||0)+i.preco*i.estoque;
-
-      section+=`
-      <div class='item'>
-        <b>${i.nome}</b><br>
-        ${i.estoque}/${i.qtd}
-        <div class='badge ${cls}'>${label}</div>
-        <button onclick='comprar(${index})'>+1</button>
-        <button onclick='toggleCheck(${index})'>✔</button>
-        <button onclick='editarPreco(${index})'>💰</button>
-        <button class='delete' onclick='remover(${index})'>🗑</button>
-      </div>`;
+            section+=`
+            <div class='item'>
+                <b>${i.nome}</b><br>
+                <small>Qtd: ${i.estoque}</small><br>
+                <div class='badge ${cls}'>${label}</div>
+                <div class='actions'>
+                    <button onclick='comprar(${index})'>+1</button>
+                    <button onclick='toggleCheck(${index})'>✔</button>
+                    <button onclick='editarPreco(${index})'>R$</button>
+                    <button class='delete' onclick='remover(${index})'>🗑</button>
+                </div>
+            </div>`;
+        });
+        if(section) html += `<div class='categoria'><h3>${cat}</h3><div class='grid'>${section}</div></div>`;
     });
 
-    if(section){
-      html += `<div class='categoria'><h3>${cat}</h3><div class='grid'>${section}</div></div>`;
+    document.getElementById("lista").innerHTML=html;
+    document.getElementById("resumo").innerText = "Total: R$ " + total.toFixed(2);
+
+    if(Object.keys(catData).length > 0){
+        if(window.chart) window.chart.destroy();
+        window.chart = new Chart(document.getElementById("grafico"),{
+            type:'doughnut',
+            data:{
+                labels:Object.keys(catData),
+                datasets:[{data:Object.values(catData),backgroundColor:['#6c63ff','#ff7eb3','#FFD700','#FF8C00','#40E0D0']}]
+            },
+            options:{plugins:{legend:{display:false}}}
+        });
     }
-  });
-
-  lista.innerHTML=html;
-  resumo.innerText = "Total gasto: R$ " + total.toFixed(2);
-
-  if(window.chart) chart.destroy();
-  window.chart = new Chart(grafico,{type:'doughnut',data:{labels:Object.keys(catData),datasets:[{data:Object.values(catData)}]}});
 }
-
 render();
-</script></body>
+</script>
+</body>
 </html>
