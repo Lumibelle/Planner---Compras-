@@ -2,99 +2,122 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Planner Dashboard PRO</title>
+<title>Smart List PRO+</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;font-family:system-ui}
-body{display:flex;height:100vh;background:#f4f5fb}/* Sidebar */ .sidebar{ width:80px; background:linear-gradient(180deg,#6c63ff,#8f94fb); display:flex; flex-direction:column; align-items:center; padding:20px 0; gap:20px; } .sidebar div{ width:40px;height:40px; background:rgba(255,255,255,0.2); border-radius:12px; }
-
-/* Main */ .main{ flex:1; padding:20px; overflow:auto; }
-
-.header{ display:flex; justify-content:space-between; margin-bottom:20px; }
-
-.cards{ display:grid; grid-template-columns:2fr 1fr; gap:15px; }
-
-.big-card{ background:linear-gradient(135deg,#6c63ff,#ff7eb3); color:white; padding:20px; border-radius:20px; }
-
-.small-card{ background:white; padding:15px; border-radius:20px; box-shadow:0 8px 20px rgba(0,0,0,0.08); }
-
-.grid{ margin-top:20px; display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:12px; }
-
-.item{ background:white; padding:15px; border-radius:16px; box-shadow:0 6px 15px rgba(0,0,0,0.08); }
-
-button{ margin-top:8px; padding:6px 10px; border:none; border-radius:8px; background:#6c63ff; color:white; cursor:pointer; }
-
-.badge{font-size:12px;padding:3px 6px;border-radius:6px;margin-top:5px;display:inline-block} .red{background:#ffe5e5;color:#d33} .yellow{background:#fff5cc;color:#b58b00} .green{background:#e6ffea;color:#2e9b4f} </style>
-
+body{display:flex;height:100vh;background:#f4f5fb}
+.sidebar{width:90px;background:linear-gradient(180deg,#6c63ff,#8f94fb)}
+.main{flex:1;padding:20px;overflow:auto}
+.header{display:flex;justify-content:space-between;margin-bottom:15px;gap:10px}
+input{padding:8px;border-radius:8px;border:1px solid #ddd}
+.cards{display:grid;grid-template-columns:2fr 1fr;gap:15px}
+.big-card{background:linear-gradient(135deg,#6c63ff,#ff7eb3);color:white;padding:20px;border-radius:20px}
+.small-card{background:white;padding:15px;border-radius:20px;box-shadow:0 8px 20px rgba(0,0,0,0.08)}
+.categoria{margin-top:25px}
+.categoria h3{color:#666;margin-bottom:10px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px}
+.item{background:white;padding:12px;border-radius:14px;box-shadow:0 6px 15px rgba(0,0,0,0.08)}
+.badge{font-size:12px;padding:3px 6px;border-radius:6px;margin-top:5px;display:inline-block}
+.red{background:#ffe5e5;color:#d33}
+.yellow{background:#fff5cc;color:#b58b00}
+.green{background:#e6ffea;color:#2e9b4f}
+button{margin-top:6px;margin-right:4px;padding:5px 8px;border:none;border-radius:8px;background:#6c63ff;color:white;cursor:pointer}
+.delete{background:#ff4d4d}
+</style>
 </head>
-<body><div class="sidebar">
-  <div></div>
-  <div></div>
-  <div></div>
-  <div></div>
-</div><div class="main"><div class="header">
-  <h2 id="user"></h2>
+<body><div class="sidebar"></div><div class="main">
+<div class="header">
+<h2 id="user"></h2>
+<input id="busca" placeholder="Buscar produto..." oninput="render()">
 </div><div class="cards">
-  <div class="big-card">
-    <h3>Resumo</h3>
-    <p id="resumo"></p>
-  </div>
-  <div class="small-card">
-    <canvas id="grafico"></canvas>
-  </div>
-</div><div class="grid" id="lista"></div></div><script>
+<div class="big-card"><h3>Resumo</h3><p id="resumo"></p></div>
+<div class="small-card"><canvas id="grafico"></canvas></div>
+</div><div id="lista"></div>
+</div><script>
 let user = localStorage.getItem("user") || prompt("Seu nome:");
 localStorage.setItem("user", user);
 document.getElementById("user").innerText = "Olá, " + user;
 
-let items = JSON.parse(localStorage.getItem("items") || "[]");
+const base = [
+["HORTIFRUTI",["Alface","Rúcula","Tomate","Cenoura","Pimentão","Cebola","Limão","Morango","Uva","Manga","Pera","Maçã","Maracujá","Laranja","Abacaxi"]],
+["CARNES",["Carne bovina","Carne moída","Linguiça"]],
+["LATICÍNIOS",["Queijo","Parmesão","Requeijão","Creme de leite","Manteiga","Danone","Leite"]],
+["MERCEARIA",["Feijão","Macarrão","Café","Chá","Sal","Açúcar","Molho","Milho","Farofa","Tapioca","Óleo","Azeite","Vinagre","Bicarbonato","Molho inglês"]],
+["CONGELADOS",["Peixe","Legumes","Frango","Pão de queijo","Batata frita","Coxa sobrecoxa"]],
+["PADARIA",["Torrada","Pão","Biscoito"]],
+["LIMPEZA",["Detergente","Sabão","Amaciante","Veja","Desinfetante","Esponja","Álcool","Lustra móveis","Repelente"]],
+["HIGIENE",["Shampoo","Condicionador","Sabonete","Pasta de dente","Papel higiênico","Desodorante","Absorvente"]]
+];
+
+let items = JSON.parse(localStorage.getItem("items")||"null");
+if(!items){
+  items=[];
+  base.forEach(([cat,arr])=>{
+    arr.forEach(nome=>{
+      items.push({nome,categoria:cat,qtd:1,estoque:0,preco:0,comprado:false});
+    });
+  });
+}
 
 function status(i){
-  if(i.estoque==0) return {txt:'comprar',cls:'red',label:'🔴 Comprar'};
-  if(i.estoque<i.qtd) return {txt:'verificar',cls:'yellow',label:'🟡 Verificar'};
-  return {txt:'ok',cls:'green',label:'🟢 OK'};
+  if(i.comprado) return ['green','✔ Comprado'];
+  if(i.estoque==0) return ['red','🔴 Comprar'];
+  if(i.estoque<i.qtd) return ['yellow','🟡 Verificar'];
+  return ['green','🟢 OK'];
 }
 
+function toggleCheck(i){items[i].comprado=!items[i].comprado;save()}
 function comprar(i){items[i].estoque++;save()}
+function remover(i){ if(confirm('Remover item?')){ items.splice(i,1); save(); }}
 
-function save(){
-  localStorage.setItem("items", JSON.stringify(items));
-  render();
+function editarPreco(i){
+  let p = prompt("Preço:", items[i].preco);
+  if(p!==null) items[i].preco = +p;
+  save();
 }
+
+function save(){localStorage.setItem("items",JSON.stringify(items));render()}
 
 function render(){
-  let html="";
   let total=0;
-  let categorias={};
+  let catData={};
+  let html="";
+  let termo = busca.value.toLowerCase();
 
-  items.forEach((i,index)=>{
-    let st=status(i);
-    total += i.preco * i.estoque;
-    categorias[i.categoria]=(categorias[i.categoria]||0)+i.preco*i.estoque;
+  base.forEach(([cat])=>{
+    let section="";
 
-    html += `
-    <div class="item">
-      <b>${i.nome}</b><br>
-      ${i.categoria}<br>
-      ${i.estoque}/${i.qtd}<br>
-      R$ ${i.preco}<br>
-      <div class="badge ${st.cls}">${st.label}</div>
-      <button onclick="comprar(${index})">+1</button>
-    </div>`;
+    items.forEach((i,index)=>{
+      if(i.categoria!==cat) return;
+      if(termo && !i.nome.toLowerCase().includes(termo)) return;
+
+      let [cls,label]=status(i);
+      total+=i.preco*i.estoque;
+      catData[cat]=(catData[cat]||0)+i.preco*i.estoque;
+
+      section+=`
+      <div class='item'>
+        <b>${i.nome}</b><br>
+        ${i.estoque}/${i.qtd}
+        <div class='badge ${cls}'>${label}</div>
+        <button onclick='comprar(${index})'>+1</button>
+        <button onclick='toggleCheck(${index})'>✔</button>
+        <button onclick='editarPreco(${index})'>💰</button>
+        <button class='delete' onclick='remover(${index})'>🗑</button>
+      </div>`;
+    });
+
+    if(section){
+      html += `<div class='categoria'><h3>${cat}</h3><div class='grid'>${section}</div></div>`;
+    }
   });
 
-  lista.innerHTML = html;
+  lista.innerHTML=html;
   resumo.innerText = "Total gasto: R$ " + total.toFixed(2);
 
-  drawChart(categorias);
-}
-
-function drawChart(data){
-  if(window.chart) window.chart.destroy();
-  window.chart = new Chart(grafico,{
-    type:'doughnut',
-    data:{labels:Object.keys(data),datasets:[{data:Object.values(data)}]}
-  });
+  if(window.chart) chart.destroy();
+  window.chart = new Chart(grafico,{type:'doughnut',data:{labels:Object.keys(catData),datasets:[{data:Object.values(catData)}]}});
 }
 
 render();
