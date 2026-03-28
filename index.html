@@ -2,145 +2,122 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Smart List PRO ULTIMATE</title>
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<style>
-*{margin:0;padding:0;box-sizing:border-box;font-family:system-ui}
-body{background:#f4f5fb;padding:20px}
-.header{display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap}
-input,select{padding:8px;border-radius:8px;border:1px solid #ddd}
-button{padding:6px 10px;border:none;border-radius:8px;background:#6c63ff;color:white;cursor:pointer}
-.delete{background:#ff4d4d}
-.categoria{margin-top:25px}
-.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px}
-.item{padding:10px;border-radius:12px;color:#fff}
-.card{background:white;padding:15px;border-radius:15px;margin-bottom:20px}
-.ok{background:#2ecc71 !important}
-</style>
-</head>
-<body><h2>Smart List</h2><div class="header">
-<input id="busca" placeholder="Buscar produto..." oninput="render()"><select id="mes" onchange="render()">
-<option value="todos">Todos os meses</option>
-<option value="jan">Janeiro</option>
-<option value="fev">Fevereiro</option>
-<option value="mar">Março</option>
-</select><input id="nomeProduto" placeholder="Novo produto">
+<title>Smart List AI</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script><style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Inter',sans-serif}
+body{background:linear-gradient(135deg,#ece9ff,#fdfbff);padding:20px}
+h2{margin-bottom:15px}
+.header{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;background:white;padding:20px;border-radius:25px;margin-bottom:20px}
+input,select{padding:10px;border-radius:12px;border:1px solid #eee}
+button{padding:10px;border:none;border-radius:12px;background:#6c63ff;color:white;cursor:pointer}
+.delete{background:#ff5c5c}
+.card{background:white;padding:20px;border-radius:20px;margin-bottom:20px}
+.grid{column-count:2;column-gap:15px}
+.item{display:inline-block;width:100%;margin-bottom:15px;padding:15px;border-radius:15px;color:white}
+.ok{opacity:0.5;text-decoration:line-through}
+.sugestoes{background:#fff3cd;padding:15px;border-radius:15px;margin-bottom:20px}
+</style></head>
+<body><h2>🤖 Smart List Inteligente</h2><div class="header">
+<input id="busca" placeholder="Buscar..." oninput="render()">
+<select id="mes" onchange="render()">
+<option value="todos">Todos</option>
+<option value="jan">Jan</option>
+<option value="fev">Fev</option>
+<option value="mar">Mar</option>
+</select>
+<input id="nomeProduto" placeholder="Produto">
 <select id="categoriaSelect"></select>
-<button onclick="addProduto()">Adicionar</button><input id="novaCategoria" placeholder="Nova categoria">
+<button onclick="addProduto()">Adicionar</button>
+<input id="novaCategoria" placeholder="Categoria">
 <input id="corCategoria" type="color">
 <button onclick="addCategoria()">+ Categoria</button>
-</div><div class="card">
-<h3>Resumo</h3>
+</div><div class="sugestoes" id="sugestoes"></div><div class="card">
 <p id="resumo"></p>
 <canvas id="grafico"></canvas>
 </div><div id="lista"></div><script>
-
 let data = JSON.parse(localStorage.getItem("data")) || {
-  categorias: {
-    "HORTIFRUTI":"#6c63ff",
-    "CARNES":"#ff7b7b"
-  },
-  produtos: []
+  categorias:{"Compras":"#6c63ff"},
+  produtos:[]
 };
 
-function save(){
-  localStorage.setItem("data", JSON.stringify(data));
-  render();
-}
+function save(){localStorage.setItem("data",JSON.stringify(data));render()}
 
-function atualizarSelect(){
-  let select = document.getElementById("categoriaSelect");
-  select.innerHTML = "";
-  Object.keys(data.categorias).forEach(cat=>{
-    select.innerHTML += `<option>${cat}</option>`;
+function atualizarSelect(){categoriaSelect.innerHTML="";Object.keys(data.categorias).forEach(cat=>{categoriaSelect.innerHTML+=`<option>${cat}</option>`})}
+
+function addCategoria(){if(!novaCategoria.value)return;data.categorias[novaCategoria.value]=corCategoria.value;save()}
+
+function addProduto(){if(!nomeProduto.value)return;data.produtos.push({nome:nomeProduto.value,categoria:categoriaSelect.value,mes:mes.value,comprado:false});save()}
+
+function removeProduto(i){data.produtos.splice(i,1);save()}
+
+function toggle(i){data.produtos[i].comprado=!data.produtos[i].comprado;save()}
+
+function sugestaoInteligente(){
+  let contagem={};
+  data.produtos.forEach(p=>{
+    contagem[p.nome]=(contagem[p.nome]||0)+1;
   });
+
+  let sugestoes = Object.keys(contagem).filter(k=>contagem[k]>1);
+
+  let html = "💡 Sugestões: ";
+  sugestoes.forEach(s=>{
+    html += `<button onclick="quickAdd('${s}')">${s}</button> `;
+  });
+
+  document.getElementById("sugestoes").innerHTML = html;
 }
 
-function addCategoria(){
-  let nome = document.getElementById("novaCategoria").value;
-  let cor = document.getElementById("corCategoria").value;
-  if(!nome) return;
-  data.categorias[nome] = cor;
+function quickAdd(nome){
+  data.produtos.push({nome,categoria:Object.keys(data.categorias)[0],mes:mes.value,comprado:false});
   save();
 }
 
-function removeCategoria(cat){
-  if(confirm("Remover categoria?")){
-    delete data.categorias[cat];
-    data.produtos = data.produtos.filter(p=>p.categoria!==cat);
-    save();
+function lembrete(){
+  let faltando = data.produtos.filter(p=>!p.comprado);
+  if(faltando.length>5){
+    document.title = "🛒 Você tem itens pendentes!";
   }
-}
-
-function addProduto(){
-  let nome = document.getElementById("nomeProduto").value;
-  let cat = document.getElementById("categoriaSelect").value;
-  let mes = document.getElementById("mes").value;
-  if(!nome) return;
-  data.produtos.push({nome,categoria:cat,mes:mes,comprado:false});
-  save();
-}
-
-function removeProduto(i){
-  data.produtos.splice(i,1);
-  save();
-}
-
-function toggle(i){
-  data.produtos[i].comprado = !data.produtos[i].comprado;
-  save();
 }
 
 function render(){
   atualizarSelect();
+  sugestaoInteligente();
+  lembrete();
 
-  let busca = document.getElementById("busca").value.toLowerCase();
-  let mesFiltro = document.getElementById("mes").value;
-
-  let html = "";
-  let total = 0;
-  let contagem = {};
+  let termo = busca.value.toLowerCase();
+  let filtroMes = mes.value;
+  let html="";
+  let total=0;
+  let contagem={};
 
   Object.keys(data.categorias).forEach(cat=>{
-    let cor = data.categorias[cat];
+    let cor=data.categorias[cat];
+    let itens=data.produtos.filter(p=>p.categoria===cat && p.nome.toLowerCase().includes(termo) && (filtroMes==='todos'||p.mes===filtroMes));
 
-    let itens = data.produtos.filter(p=>
-      p.categoria===cat &&
-      p.nome.toLowerCase().includes(busca) &&
-      (mesFiltro === "todos" || p.mes === mesFiltro)
-    );
+    if(!itens.length)return;
 
-    if(itens.length === 0) return;
+    contagem[cat]=itens.length;
+    total+=itens.length;
 
-    contagem[cat] = itens.length;
-    total += itens.length;
-
-    html += `<div class='categoria'>
-      <h3>${cat} <button class='delete' onclick="removeCategoria('${cat}')">X</button></h3>
-      <div class='grid'>`;
+    html+=`<div><h3>${cat}</h3><div class='grid'>`;
 
     itens.forEach((p,i)=>{
-      html += `<div class='item ${p.comprado ? "ok" : ""}' style='background:${cor}'>
-        ${p.nome}<br>
-        <button onclick='toggle(${i})'>✔</button>
-        <button class='delete' onclick='removeProduto(${i})'>🗑</button>
-      </div>`;
+      html+=`<div class='item ${p.comprado?'ok':''}' style='background:${cor}'>${p.nome}<br>
+      <button onclick='toggle(${i})'>✔</button>
+      <button class='delete' onclick='removeProduto(${i})'>🗑</button></div>`;
     });
 
-    html += `</div></div>`;
+    html+=`</div></div>`;
   });
 
-  document.getElementById("lista").innerHTML = html;
-  document.getElementById("resumo").innerText = `Total: ${total}`;
+  lista.innerHTML=html;
+  resumo.innerText=`Total: ${total}`;
 
   if(window.chart) chart.destroy();
-  window.chart = new Chart(document.getElementById("grafico"),{
-    type:'doughnut',
-    data:{labels:Object.keys(contagem),datasets:[{data:Object.values(contagem)}]}
-  });
+  window.chart=new Chart(grafico,{type:'doughnut',data:{labels:Object.keys(contagem),datasets:[{data:Object.values(contagem)}]}});
 }
 
 render();
-
 </script></body>
 </html>
