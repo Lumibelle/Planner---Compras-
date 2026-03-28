@@ -3,258 +3,218 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Smart List Premium</title>
+<title>Smart List AI</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <style>
-*{margin:0;padding:0;box-sizing:border-box;font-family:'Inter',sans-serif}
+*{margin:0;padding:0;box-sizing:border-box;font-family:Arial}
+body{display:flex;background:#0f172a;color:#fff}
 
-body{
-  display:flex;
-  background: radial-gradient(circle at top, #1e3a8a, #0f172a 70%);
-  color:#fff;
-}
-
-/* efeito mágico */
-body::before{
-  content:"";
-  position:fixed;
-  width:200%;
-  height:200%;
-  background:radial-gradient(circle, rgba(255,255,255,0.08) 1px, transparent 1px);
-  background-size:40px 40px;
-  animation:stars 20s linear infinite;
-  z-index:-1;
-}
-
-@keyframes stars{
-  from{transform:translateY(0);}
-  to{transform:translateY(-200px);}
-}
-
+/* SIDEBAR */
 .sidebar{
-  width:90px;
-  background:rgba(255,255,255,0.08);
-  backdrop-filter:blur(15px);
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  padding:20px;
-  gap:20px;
-  height:100vh;
+  width:80px;background:#020617;
+  display:flex;flex-direction:column;align-items:center;
+  padding:20px;gap:20px;
 }
-
-.sidebar div{
-  cursor:pointer;
-  padding:14px;
-  border-radius:16px;
-  transition:0.3s;
+.icon{
+  width:45px;height:45px;
+  display:flex;align-items:center;justify-content:center;
+  border-radius:12px;cursor:pointer;background:#111827;
 }
+.icon:hover{background:#2563eb}
+.active{background:#2563eb}
+.icon svg{width:22px;stroke:white}
 
-.sidebar .active{
-  background:linear-gradient(135deg,#6366f1,#60a5fa);
-}
+/* MAIN */
+.main{flex:1;padding:20px}
 
-.main{flex:1;padding:25px}
-.hidden{display:none}
-
-.card{
-  background:linear-gradient(135deg,rgba(255,255,255,0.15),rgba(255,255,255,0.05));
-  backdrop-filter:blur(20px);
-  padding:20px;
-  border-radius:25px;
-  margin-bottom:15px;
-}
-
-.grid{
+/* CARDS */
+.cards{
   display:grid;
-  grid-template-columns:repeat(auto-fill,minmax(160px,1fr));
+  grid-template-columns:repeat(4,1fr);
+  gap:10px;margin-bottom:20px;
+}
+.card{
+  background:#1e293b;padding:15px;border-radius:12px;
+}
+
+/* LISTA */
+.lista{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(180px,1fr));
   gap:10px;
 }
-
 .item{
-  padding:12px;
-  border-radius:16px;
-  transition:0.2s;
+  background:#334155;padding:10px;border-radius:10px;
 }
-
-.item:hover{transform:scale(1.05)}
-.ok{opacity:0.5;text-decoration:line-through}
 
 button{
-  margin-top:5px;
-  padding:6px;
-  border:none;
-  border-radius:10px;
-  background:#6366f1;
-  color:white;
+  margin-top:5px;padding:5px;border:none;
+  border-radius:6px;background:#2563eb;color:#fff;
   cursor:pointer;
 }
-
 .delete{background:#ef4444}
-
-input,select{
-  padding:10px;
-  border-radius:10px;
-  border:none;
-  margin-bottom:10px;
-}
+.hidden{display:none}
 </style>
 </head>
 
 <body>
 
 <div class="sidebar">
-<div onclick="setView('home',this)" class="active">🏠</div>
-<div onclick="setView('lista',this)">🛒</div>
-<div onclick="setView('grafico',this)">📊</div>
+
+<div class="icon active" onclick="setView('home',this)">
+<svg viewBox="0 0 24 24"><path d="M3 3v18h18"/></svg>
+</div>
+
+<div class="icon" onclick="setView('lista',this)">
+<svg viewBox="0 0 24 24"><path d="M6 6h15l-1 9H6z"/></svg>
+</div>
+
+<div class="icon" onclick="setView('gastos',this)">
+<svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M6 14l3-3 4 4 5-6"/></svg>
+</div>
+
+<div class="icon" onclick="setView('historico',this)">
+<svg viewBox="0 0 24 24"><path d="M12 8v5l3 3"/><circle cx="12" cy="12" r="9"/></svg>
+</div>
+
 </div>
 
 <div class="main">
 
-<h2 id="user"></h2>
+<h2>Smart List AI</h2>
 
+<!-- HOME -->
 <div id="home">
-<div class="card">
-<h3>Status</h3>
-<p>Total: <span id="total"></span></p>
-<p>Comprados: <span id="comprados"></span></p>
-<p>Pendentes: <span id="pendentes"></span></p>
-</div>
-</div>
-
-<div id="lista" class="hidden">
-<button onclick="modoMercado()">Modo Mercado</button>
-<div id="listaProdutos" class="grid"></div>
+<div class="cards">
+<div class="card">Gasto atual: R$ <span id="gastoAtual"></span></div>
+<div class="card">Previsão IA: R$ <span id="previsao"></span></div>
+<div class="card">Mês atual: <span id="mesAtual"></span></div>
+<div class="card">Itens: <span id="total"></span></div>
 </div>
 
-<div id="grafico" class="hidden">
 <canvas id="chart"></canvas>
+</div>
+
+<!-- LISTA -->
+<div id="lista" class="hidden">
+<input id="nome" placeholder="Produto">
+<input id="preco" placeholder="Preço">
+<button onclick="addProduto()">Adicionar</button>
+
+<div class="lista" id="listaProdutos"></div>
+</div>
+
+<!-- GASTOS -->
+<div id="gastos" class="hidden">
+<canvas id="chartGastos"></canvas>
+</div>
+
+<!-- HISTORICO -->
+<div id="historico" class="hidden">
+<canvas id="chartHistorico"></canvas>
 </div>
 
 </div>
 
 <script>
 
-// 👤 usuário
-let user = localStorage.getItem("user") || prompt("Seu nome:");
-localStorage.setItem("user", user);
-document.getElementById("user").innerText = "Olá, "+user;
-
-// 📦 dados
+// DATA
 let data = JSON.parse(localStorage.getItem("data")) || {
- categorias:{
-  "Hortifruti":"#22c55e",
-  "Carnes":"#ef4444",
-  "Laticinios":"#facc15",
-  "Mercearia":"#a78bfa",
-  "Congelados":"#60a5fa",
-  "Padaria":"#fb923c",
-  "Limpeza":"#06b6d4",
-  "Higiene":"#f472b6"
- },
-
- produtos:[
-  {nome:"Alface x1",categoria:"Hortifruti",comprado:false},
-  {nome:"Tomate x3",categoria:"Hortifruti",comprado:false},
-  {nome:"Cenoura x2",categoria:"Hortifruti",comprado:false},
-  {nome:"Cebola x3",categoria:"Hortifruti",comprado:false},
-
-  {nome:"Carne bovina 2kg",categoria:"Carnes",comprado:false},
-  {nome:"Carne moída 2kg",categoria:"Carnes",comprado:false},
-
-  {nome:"Leite x2",categoria:"Laticinios",comprado:false},
-  {nome:"Queijo x2",categoria:"Laticinios",comprado:false},
-
-  {nome:"Feijão x2",categoria:"Mercearia",comprado:false},
-  {nome:"Macarrão x2",categoria:"Mercearia",comprado:false},
-
-  {nome:"Frango",categoria:"Congelados",comprado:false},
-
-  {nome:"Pão",categoria:"Padaria",comprado:false},
-
-  {nome:"Detergente",categoria:"Limpeza",comprado:false},
-
-  {nome:"Shampoo",categoria:"Higiene",comprado:false}
- ]
+ produtos:[],
+ historico:{}
 };
 
-// 💾 salvar
+// DATA ATUAL
+let hoje = new Date();
+let mes = hoje.getMonth();
+let ano = hoje.getFullYear();
+let chaveMes = `${mes}-${ano}`;
+
+// SALVAR
 function save(){
  localStorage.setItem("data",JSON.stringify(data));
  render();
 }
 
-// 🧭 navegação
+// NAVEGAÇÃO
 function setView(v,el){
- document.querySelectorAll(".sidebar div").forEach(d=>d.classList.remove("active"));
+ document.querySelectorAll(".icon").forEach(i=>i.classList.remove("active"));
  el.classList.add("active");
+
  document.querySelectorAll(".main > div").forEach(d=>d.classList.add("hidden"));
  document.getElementById(v).classList.remove("hidden");
 }
 
-// 🛒 modo mercado
-function modoMercado(){
+// ADD
+function addProduto(){
+ data.produtos.push({
+  nome:nome.value,
+  preco:Number(preco.value),
+  comprado:0
+ });
+ save();
+}
 
- const ordem = [
-  "Hortifruti",
-  "Carnes",
-  "Laticinios",
-  "Congelados",
-  "Mercearia",
-  "Padaria",
-  "Limpeza",
-  "Higiene"
- ];
+// COMPRAR
+function comprar(i){
+ data.produtos[i].comprado++;
+ save();
+}
 
- data.produtos.sort((a,b)=>{
-  return ordem.indexOf(a.categoria) - ordem.indexOf(b.categoria);
+// RENDER
+function render(){
+
+ let gasto=0;
+
+ data.produtos.forEach(p=>{
+  gasto += p.preco * p.comprado;
  });
 
- render();
-}
+ // salvar histórico automático
+ data.historico[chaveMes] = gasto;
 
-// ✔ ações
-function toggle(i){data.produtos[i].comprado=!data.produtos[i].comprado;save()}
-function remove(i){data.produtos.splice(i,1);save()}
+ // previsão IA (média últimos meses)
+ let valores = Object.values(data.historico);
+ let media = valores.reduce((a,b)=>a+b,0)/ (valores.length||1);
 
-// 🔔 lembrete mensal
-function lembreteMensal(){
- let hoje = new Date().getDate();
- if(hoje === 1){
-  alert("Hora de revisar sua lista de compras!");
- }
-}
-setInterval(lembreteMensal, 86400000);
+ // UI
+ gastoAtual.innerText=gasto.toFixed(2);
+ previsao.innerText=media.toFixed(2);
+ mesAtual.innerText=chaveMes;
+ total.innerText=data.produtos.length;
 
-// 🎨 render
-function render(){
- let html="",total=0,comp=0;
-
+ // lista
+ let html="";
  data.produtos.forEach((p,i)=>{
-  total++;
-  if(p.comprado)comp++;
-
   html+=`
-  <div class='item ${p.comprado?'ok':''}' style='background:${data.categorias[p.categoria]}'>
+  <div class="item">
   ${p.nome}<br>
-  <button onclick='toggle(${i})'>✔</button>
-  <button class='delete' onclick='remove(${i})'>X</button>
+  R$ ${p.preco}<br>
+  Comprado: ${p.comprado}<br>
+  <button onclick="comprar(${i})">Comprar</button>
   </div>`;
  });
-
  listaProdutos.innerHTML=html;
- total.innerText=total;
- comprados.innerText=comp;
- pendentes.innerText=total-comp;
 
- let cont={};
- data.produtos.forEach(p=>cont[p.categoria]=(cont[p.categoria]||0)+1);
-
+ // gráfico atual
  if(window.chart)chart.destroy();
- chart=new Chart(document.getElementById("chart"),{
-  type:'doughnut',
-  data:{labels:Object.keys(cont),datasets:[{data:Object.values(cont)}]}
+ chart=new Chart(chart,{
+  type:'bar',
+  data:{
+   labels:data.produtos.map(p=>p.nome),
+   datasets:[{data:data.produtos.map(p=>p.preco*p.comprado)}]
+  }
+ });
+
+ // gráfico histórico
+ if(window.chartHistorico)chartHistorico.destroy();
+ chartHistorico=new Chart(chartHistorico,{
+  type:'line',
+  data:{
+   labels:Object.keys(data.historico),
+   datasets:[{data:Object.values(data.historico)}]
+  }
  });
 }
 
