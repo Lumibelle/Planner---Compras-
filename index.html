@@ -2,209 +2,203 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Smart List Elegant+</title>
+<title>Smart List Premium Final</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script><style>
 *{margin:0;padding:0;box-sizing:border-box;font-family:'Inter',sans-serif}
 
-:root{
-  --bg1:#1e1b4b;
-  --bg2:#312e81;
-  --bg3:#4f46e5;
-  --card:rgba(255,255,255,0.08);
-  --text:#fff;
-}
-
-body.light{
-  --bg1:#eef2ff;
-  --bg2:#e0e7ff;
-  --bg3:#c7d2fe;
-  --card:white;
-  --text:#333;
-}
-
 body{
-  background:linear-gradient(135deg,var(--bg1),var(--bg2),var(--bg3));
-  color:var(--text);
-  min-height:100vh;
-  padding:20px;
-  transition:0.4s;
+  display:flex;
+  background:linear-gradient(135deg,#1e1b4b,#312e81,#4f46e5);
+  color:#fff;
 }
 
-h2{margin-bottom:20px}
-
-.header{
-  display:grid;
-  grid-template-columns:repeat(auto-fit,minmax(140px,1fr));
-  gap:10px;
-  background:var(--card);
-  backdrop-filter:blur(12px);
-  padding:15px;
-  border-radius:20px;
-  margin-bottom:20px;
+.sidebar{
+  width:90px;
+  background:rgba(255,255,255,0.08);
+  backdrop-filter:blur(15px);
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  padding:20px 10px;
+  gap:25px;
+  height:100vh;
 }
 
-input,select{
-  padding:10px;
-  border-radius:12px;
-  border:none;
-  background:rgba(255,255,255,0.15);
-  color:inherit;
-}
-
-button{
-  padding:10px;
-  border:none;
-  border-radius:12px;
-  background:linear-gradient(135deg,#6366f1,#60a5fa);
-  color:white;
+.sidebar div{
   cursor:pointer;
-  transition:0.2s;
+  font-size:20px;
+  padding:12px;
+  border-radius:14px;
+  transition:0.3s;
 }
 
-button:hover{transform:translateY(-2px)}
-.delete{background:#ef4444}
+.sidebar div:hover{
+  background:rgba(255,255,255,0.25);
+  transform:scale(1.1);
+}
 
-.toggleTheme{
-  position:fixed;
-  top:15px;
-  right:15px;
+.sidebar .active{
+  background:linear-gradient(135deg,#6366f1,#60a5fa);
+  box-shadow:0 5px 15px rgba(0,0,0,0.3);
+}
+
+.main{
+  flex:1;
+  padding:25px;
+}
+
+.hidden{display:none}
+
+.cards{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
+  gap:15px;
+  margin-bottom:20px;
 }
 
 .card{
-  background:var(--card);
+  background:linear-gradient(135deg,rgba(255,255,255,0.1),rgba(255,255,255,0.05));
+  backdrop-filter:blur(15px);
   padding:20px;
   border-radius:20px;
-  margin-bottom:20px;
+  box-shadow:0 10px 30px rgba(0,0,0,0.3);
 }
 
 .grid{
   display:grid;
   grid-template-columns:repeat(auto-fill,minmax(160px,1fr));
-  gap:15px;
+  gap:12px;
 }
 
 .item{
-  padding:15px;
-  border-radius:18px;
+  padding:12px;
+  border-radius:16px;
+  box-shadow:0 10px 25px rgba(0,0,0,0.25);
+  transition:0.25s;
   color:white;
-  box-shadow:0 8px 25px rgba(0,0,0,0.3);
-  transition:0.3s;
-  animation:fadeIn 0.4s ease;
 }
 
-@keyframes fadeIn{
-  from{opacity:0;transform:translateY(10px)}
-  to{opacity:1;transform:translateY(0)}
+.item:hover{
+  transform:translateY(-5px) scale(1.02);
 }
 
-.item.added{
-  animation:pop 0.3s ease;
+.ok{
+  opacity:0.5;
+  text-decoration:line-through;
 }
 
-@keyframes pop{
-  0%{transform:scale(0.8)}
-  100%{transform:scale(1)}
+button{
+  margin-top:5px;
+  padding:6px;
+  border:none;
+  border-radius:10px;
+  background:#6366f1;
+  color:white;
+  cursor:pointer;
 }
 
-.ok{opacity:0.5;text-decoration:line-through}
-.actions{margin-top:10px;display:flex;gap:5px}
+.delete{background:#ef4444}
 
-.categoria{margin-top:25px}
-.categoria h3{margin-bottom:10px}
+input,select{
+  padding:10px;
+  border-radius:10px;
+  border:none;
+  margin-bottom:10px;
+}
 
-.sugestoes{background:var(--card);padding:15px;border-radius:15px;margin-bottom:15px}
-</style></head><body><button class="toggleTheme" onclick="toggleTheme()">🌙/☀️</button>
-
-<h2>💜 Smart List</h2><div class="header">
-<input id="busca" placeholder="Buscar..." oninput="render()">
-<select id="mes" onchange="render()">
-<option value="todos">Todos</option>
-<option value="jan">Jan</option>
-<option value="fev">Fev</option>
-<option value="mar">Mar</option>
-</select>
+</style></head><body><div class="sidebar">
+<div onclick="setView('home',this)" class="active">🏠</div>
+<div onclick="setView('lista',this)">🛒</div>
+<div onclick="setView('grafico',this)">📊</div>
+<div onclick="setView('mes',this)">📅</div>
+</div><div class="main"><h2 id="user"></h2><div id="home">
+<div class="cards">
+<div class="card"><h3>Total</h3><p id="total"></p></div>
+<div class="card"><h3>Comprados</h3><p id="comprados"></p></div>
+<div class="card"><h3>Pendentes</h3><p id="pendentes"></p></div>
+</div><div class="card">
+<h3>🤖 Sugestões Inteligentes</h3>
+<div id="sugestoes"></div>
+</div>
+</div><div id="lista" class="hidden">
 <input id="nomeProduto" placeholder="Produto">
-<select id="categoriaSelect"></select>
+<select id="categoria"></select>
 <button onclick="addProduto()">Adicionar</button>
-<input id="novaCategoria" placeholder="Categoria">
-<input id="corCategoria" type="color">
-<button onclick="addCategoria()">+ Categoria</button>
-</div><div class="sugestoes" id="sugestoes"></div><div class="card">
-<p id="resumo"></p>
-<canvas id="grafico"></canvas>
-</div><div id="lista"></div><script>
-let data = JSON.parse(localStorage.getItem("data")) || {
-  categorias:{"Compras":"#6366f1"},
-  produtos:[]
-};
+<div id="listaProdutos" class="grid"></div>
+</div><div id="grafico" class="hidden">
+<canvas id="chart"></canvas>
+</div><div id="mes" class="hidden">
+<select onchange="render()">
+<option>Jan</option>
+<option>Fev</option>
+<option>Mar</option>
+</select>
+</div></div><script>
+let user = localStorage.getItem("user") || prompt("Seu nome:");
+localStorage.setItem("user", user);
+document.getElementById("user").innerText = "Olá, "+user;
 
-function toggleTheme(){
-  document.body.classList.toggle("light");
-}
+let data = JSON.parse(localStorage.getItem("data")) || {
+ categorias:{"Hortifruti":"#22c55e","Carnes":"#ef4444"},
+ produtos:[{nome:"Tomate",categoria:"Hortifruti",comprado:false},{nome:"Carne",categoria:"Carnes",comprado:false}]
+};
 
 function save(){localStorage.setItem("data",JSON.stringify(data));render()}
 
-function atualizarSelect(){categoriaSelect.innerHTML="";Object.keys(data.categorias).forEach(cat=>{categoriaSelect.innerHTML+=`<option>${cat}</option>`})}
-
-function addCategoria(){if(!novaCategoria.value)return;data.categorias[novaCategoria.value]=corCategoria.value;save()}
+function setView(v,el){
+ document.querySelectorAll(".sidebar div").forEach(d=>d.classList.remove("active"));
+ el.classList.add("active");
+ document.querySelectorAll(".main > div").forEach(d=>d.classList.add("hidden"));
+ document.getElementById(v).classList.remove("hidden");
+}
 
 function addProduto(){
-  if(!nomeProduto.value)return;
-  data.produtos.push({nome:nomeProduto.value,categoria:categoriaSelect.value,mes:mes.value,comprado:false});
-  nomeProduto.value="";
-  save();
+ let nome = nomeProduto.value;
+ let cat = categoria.value;
+ if(!nome)return;
+ data.produtos.push({nome,categoria:cat,comprado:false});
+ nomeProduto.value="";
+ save();
 }
-
-function removeProduto(i){data.produtos.splice(i,1);save()}
 
 function toggle(i){data.produtos[i].comprado=!data.produtos[i].comprado;save()}
+function remove(i){data.produtos.splice(i,1);save()}
 
-function sugestao(){
-  let cont={};
-  data.produtos.forEach(p=>{cont[p.nome]=(cont[p.nome]||0)+1});
-  let sug=Object.keys(cont).filter(k=>cont[k]>1);
-  sugestoes.innerHTML = sug.length ? "💡 Sugestões: " + sug.map(s=>`<button onclick="quickAdd('${s}')">${s}</button>`).join(" ") : "";
+function sugestoes(){
+ let cont={};
+ data.produtos.forEach(p=>cont[p.nome]=(cont[p.nome]||0)+1);
+ let html="";
+ Object.keys(cont).forEach(n=>{if(cont[n]>=2)html+=`<button onclick="addSug('${n}')">${n}</button>`});
+ sugestoes.innerHTML=html||"Sem sugestões ainda";
 }
 
-function quickAdd(nome){data.produtos.push({nome,categoria:Object.keys(data.categorias)[0],mes:mes.value,comprado:false});save()}
+function addSug(n){data.produtos.push({nome:n,categoria:Object.keys(data.categorias)[0],comprado:false});save()}
 
 function render(){
-  atualizarSelect();
-  sugestao();
+ let html="",total=0,comp=0;
+ data.produtos.forEach((p,i)=>{
+ total++;
+ if(p.comprado)comp++;
+ html+=`<div class='item ${p.comprado?'ok':''}' style='background:${data.categorias[p.categoria]}'>
+ ${p.nome}<br>
+ <button onclick='toggle(${i})'>✔</button>
+ <button class='delete' onclick='remove(${i})'>X</button>
+ </div>`;
+ });
 
-  let termo=busca.value.toLowerCase();
-  let filtro=mes.value;
+ listaProdutos.innerHTML=html;
+ totalEl = document.getElementById("total");
+ totalEl.innerText=total;
+ document.getElementById("comprados").innerText=comp;
+ document.getElementById("pendentes").innerText=total-comp;
 
-  let html="";
-  let total=0;
+ let cont={};
+ data.produtos.forEach(p=>cont[p.categoria]=(cont[p.categoria]||0)+1);
+ if(window.chart)chart.destroy();
+ chart=new Chart(document.getElementById("chart"),{type:'doughnut',data:{labels:Object.keys(cont),datasets:[{data:Object.values(cont)}]}});
 
-  Object.keys(data.categorias).forEach(cat=>{
-    let cor=data.categorias[cat];
-
-    let itens=data.produtos.filter(p=>p.categoria===cat && p.nome.toLowerCase().includes(termo) && (filtro==='todos'||p.mes===filtro));
-
-    if(!itens.length)return;
-
-    total+=itens.length;
-
-    html+=`<div class='categoria'>
-    <h3>${cat}</h3>
-    <div class='grid'>`;
-
-    itens.forEach((p,i)=>{
-      html+=`<div class='item ${p.comprado?'ok':''}' style='background:${cor}'>
-      ${p.nome}
-      <div class='actions'>
-      <button onclick='toggle(${i})'>✔</button>
-      <button class='delete' onclick='removeProduto(${i})'>🗑</button>
-      </div></div>`;
-    });
-
-    html+=`</div></div>`;
-  });
-
-  lista.innerHTML=html;
-  resumo.innerText=`Total: ${total}`;
+ categoria.innerHTML=Object.keys(data.categorias).map(c=>`<option>${c}</option>`).join("");
+ sugestoes();
 }
 
 render();
